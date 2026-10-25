@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import{action,parse,pipeline,transform}from'../src/sparkEngine.ts';
+const op=(kind,mode='',value='',extra='')=>({kind,mode,value,extra});
+test('parses comma/newline data and drops empty values',()=>assert.deepEqual(parse('1, 2\n\n3'),['1','2','3']));
+test('map/filter/flatMap/distinct/sort work on actual data',()=>{assert.deepEqual(transform(['2','4'],op('map','multiply','2')),['4','8']);assert.deepEqual(transform(['1','4'],op('filter','greater','2')),['4']);assert.deepEqual(transform(['big data'],op('flatMap')),['big','data']);assert.deepEqual(transform(['a','a','b'],op('distinct')),['a','b']);assert.deepEqual(transform(['10','2'],op('sortBy','ascending')),['2','10']);});
+test('union and reduceByKey produce data-dependent results',()=>{assert.deepEqual(transform(['a'],op('union','','','b,c')),['a','b','c']);assert.deepEqual(transform(['tea:2','tea:3'],op('reduceByKey')),['tea:5']);});
+test('incompatible inputs fail and pipelines compose into actions',()=>{assert.throws(()=>transform(['word'],op('map','multiply','2')));const r=pipeline(['1','2','2'],[op('map','multiply','2'),op('distinct')]);assert.deepEqual(r.output,['2','4']);assert.equal(action(r.output,'count'),'2');assert.equal(action(r.output,'reduce'),'6');});
