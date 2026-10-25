@@ -1,0 +1,18 @@
+import { chromium } from '/Users/deekshabs/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
+const browser = await chromium.launch({ headless: true, executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', args: ['--no-sandbox'] });
+const page = await browser.newPage({ viewport: { width: 1440, height: 1050 }, deviceScaleFactor: 1 });
+await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' });
+await page.getByRole('button', { name: 'Add transformation' }).click();
+await page.getByRole('button', { name: 'filter()' }).click();
+await page.locator('.config select').selectOption('greater');
+await page.locator('.config input').fill('10');
+await page.getByRole('button', { name: 'Add transformation' }).click();
+await page.getByRole('button', { name: /Run all/ }).click();
+await page.getByRole('button', { name: 'Run action' }).click();
+const result = await page.locator('.actions pre').textContent();
+if (result !== '["16","20","16","12"]') throw new Error(`Unexpected actual result: ${result}`);
+console.log('Verified map → filter → collect:', result);
+await page.locator('.grid .panel').nth(1).screenshot({ path: 'screenshots/pipeline-result.png' });
+await page.getByRole('button', { name: /Run simulation/ }).click();
+await page.locator('.distributed').screenshot({ path: 'screenshots/partition-workers.png' });
+await browser.close();
